@@ -6,7 +6,6 @@ dotenv.config({ path: path.join(__dirname, process.env.NODE_ENV === 'production'
 
 const envVarsSchema = Joi.object()
     .keys({
-        DD_API_KEY: Joi.string().required(),
         NODE_ENV: Joi.string().valid('production', 'development', 'test').required(),
         PORT: Joi.number().default(3000),
         MONGODB_URI: Joi.string().required().description('Mongo DB URI'),
@@ -14,17 +13,25 @@ const envVarsSchema = Joi.object()
         DOMAIN: Joi.string().required().description('Main Site Domain'),
         CORS_DOMAINS: Joi.string().required(),
         EXPRESS_SESSION_SECRET: Joi.string().required(),
-        GITHUB_ORG: Joi.string().required(),
-        GITHUB_USER: Joi.string().required(),
-        GITHUB_PAT: Joi.string().required(),
-        SPARKPOST_API_KEY: Joi.string().required(),
+        REDIS_HOST_PASSWORD: Joi.string().required(),
+
         KEYCLOAK_DOMAIN: Joi.string().required(),
         KEYCLOAK_URL: Joi.string().required(),
         KEYCLOAK_REALM: Joi.string().required(),
         KEYCLOAK_CLIENT_ID: Joi.string().required(),
         KEYCLOAK_CLIENT_SECRET: Joi.string().required(),
+        
+        GITHUB_ORG: Joi.string().required(),
+        GITHUB_USER: Joi.string().required(),
+        GITHUB_PAT: Joi.string().required(),
+
         STRIPE_SECRET_KEY: Joi.string().required(),
         STRIPE_WEBHOOK_SECRET: Joi.string().required(),
+
+        ANAME_PRIVATE_KEY: Joi.string().required(),
+        ANAME_PUBLIC_KEY: Joi.string().required(),
+        ANAME_API_KEY: Joi.string().required(),
+        ANAME_API_URL: Joi.string().required(),
     })
     .unknown()
 

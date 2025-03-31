@@ -46,7 +46,7 @@ const checkJwtWithErrorHandler = (req, res, next) => {
                 next(error)
             }
         } else {
-            osubMiddleware(req, res, next)
+            next()
         }
     }
     // checkJwt(req, res, errorHandler)

@@ -15,7 +15,7 @@ const {
     GITHUB_ORG,
     KEYCLOAK_URL,
     KEYCLOAK_REALM,
-    ANAME_API_KEY_ANAME,
+    ANAME_API_KEY,
     KEYCLOAK_REALM_JUNE07,
     KEYCLOAK_ADMIN_CLIENT_ID_BANC,
     KEYCLOAK_ADMIN_CLIENT_SECRET_BANC
@@ -490,7 +490,7 @@ async function aname(auth, publicKey) {
     }
 
     try {
-        await fetch(`https://${DOMAIN}/v1/ai/aname?seed=${createdAt}${sub}` +
+        await fetch(`https://${DOMAIN}/v1/aname?seed=${createdAt}${sub}` +
             `&suffixLength=0` +
             `&dictionaries=${encodeURIComponent(JSON.stringify([
                 'https://github.june07.com/dictionary/adjs.txt',
@@ -498,10 +498,15 @@ async function aname(auth, publicKey) {
                 'https://github.june07.com/dictionary/nouns.txt']))}` +
             `&publicKey=${publicKey}`, {
             headers: {
-                'x-api-key': ANAME_API_KEY_ANAME
+                'x-api-key': ANAME_API_KEY
             }
         })
-            .then(response => response.json())
+            .then(response => {
+                if (response.status !== 200) {
+                    throw new Error(`Failed to fetch data. Status: ${response.status}, Message: ${response.statusText}`)
+                }
+                return response.json()
+            })
             .then(async data => {
                 if (data.error) {
                     throw new Error(data.error)
@@ -511,7 +516,7 @@ async function aname(auth, publicKey) {
                 return data
             })
             .catch(error => {
-                console.error('Error fetching data:', error)
+                logger.log({ level: 'error', namespace: logNS, message: error })
             })
     } catch (error) {
         logger.log({ level: 'error', namespace: logNS, message: error })

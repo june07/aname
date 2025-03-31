@@ -11,6 +11,9 @@ async function anamePublic(req, res, next) {
     try {
         const aname = await anameService.aname(auth, publicKey)
 
+        if (!aname) {
+            return res.status(404).json({ error: 'Aname not found' })
+        }
         res.send({ aname })
     } catch (error) {
         logger.log({ level: 'error', namespace: logNS, message: error })
@@ -81,5 +84,7 @@ module.exports = {
     lookupAname,
     anameStats,
     anameApiKey,
-    anamePublic
+    public: {
+        aname: anamePublic
+    }
 }
