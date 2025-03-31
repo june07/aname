@@ -75,4 +75,4 @@ jobs:
 
       - name: Deploy to Production
         run: ssh -i ~/.ssh/deploy_key github@swarm.june07.com \
-          /home/github/june07/aname/backend/update-service.sh ghcr.io/${GITHUB_REPOSITORY}/api-${{ github.sha }} aname-backend
+          /home/github/june07/aname/backend/update-service.sh ghcr.io/${GITHUB_REPOSITORY}/api-${{ github.sha }} aname-backend_node
