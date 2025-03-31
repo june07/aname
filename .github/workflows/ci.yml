@@ -46,7 +46,7 @@ jobs:
           gcr.io/kaniko-project/executor:latest \
           --context dir:///workspace/ \
           --dockerfile Dockerfile \
-          --destination docker.pkg.github.com/${GITHUB_REPOSITORY}/${IMAGE_NAME}-${{ github.sha }}
+          --destination docker.pkg.github.com/${GITHUB_REPOSITORY}/api-${{ github.sha }}
 
   deploy:
     needs: build-image
@@ -67,4 +67,4 @@ jobs:
 
       - name: Deploy to Production
         run: ssh -i ~/.ssh/deploy_key github@swarm.june07.com \
-          /home/github/june07/aname/backend/update-service.sh docker.pkg.github.com/${GITHUB_REPOSITORY}/${IMAGE_NAME}-${{ github.sha }} aname-backend_node
+          /home/github/june07/aname/backend/update-service.sh docker.pkg.github.com/${GITHUB_REPOSITORY}/api-${{ github.sha }} aname-api
