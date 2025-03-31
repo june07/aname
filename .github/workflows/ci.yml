@@ -23,9 +23,6 @@ jobs:
   build-image:
     needs: setup
     runs-on: ubuntu-latest
-    container:
-      image: gcr.io/kaniko-project/executor:debug
-      options: --entrypoint=sh
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
