@@ -23,6 +23,11 @@ jobs:
   build-image:
     needs: setup
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -48,7 +53,8 @@ jobs:
           gcr.io/kaniko-project/executor:latest \
           --context dir:///workspace/ \
           --dockerfile Dockerfile \
-          --destination ghcr.io/${GITHUB_REPOSITORY}/api-${{ github.sha }}
+          --destination ghcr.io/${GITHUB_REPOSITORY}/api-${{ github.sha }} \
+          --destination ghcr.io/${GITHUB_REPOSITORY}/api-latest
 
   deploy:
     needs: build-image
@@ -69,4 +75,4 @@ jobs:
 
       - name: Deploy to Production
         run: ssh -i ~/.ssh/deploy_key github@swarm.june07.com \
-          /home/github/june07/aname/backend/update-service.sh ghcr.io/${GITHUB_REPOSITORY}/api-${{ github.sha }} aname-api
+          /home/github/june07/aname/backend/update-service.sh ghcr.io/${GITHUB_REPOSITORY}/api-${{ github.sha }} aname-backend
