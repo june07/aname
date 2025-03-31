@@ -33,7 +33,7 @@ jobs:
           {
             "auths": {
               "ghcr.io": {
-                "auth": "$(echo -n ${{ github.actor }}:${{ secrets.GITHUB_TOKEN }} | base64)"
+                "auth": "$(echo -n 'june07:${{ secrets.GITHUB_TOKEN }}' | base64)"
               }
             }
           }
