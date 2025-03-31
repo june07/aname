@@ -32,12 +32,14 @@ jobs:
           cat <<JSON > config.json
           {
             "auths": {
-              "docker.pkg.github.com": {
-                "auth": "$(echo -n :${{ secrets.GITHUB_TOKEN }} | base64)"
+              "ghcr.io": {
+                "auth": "$(echo -n ${{ github.actor }}:${{ secrets.GITHUB_TOKEN }} | base64)"
               }
             }
           }
           JSON
+          ls -lah config.json
+          cat config.json
       - name: Build and Push Docker Image
         run: |
           docker run \
@@ -46,7 +48,7 @@ jobs:
           gcr.io/kaniko-project/executor:latest \
           --context dir:///workspace/ \
           --dockerfile Dockerfile \
-          --destination docker.pkg.github.com/${GITHUB_REPOSITORY}/api-${{ github.sha }}
+          --destination ghcr.io/${GITHUB_REPOSITORY}/api-${{ github.sha }}
 
   deploy:
     needs: build-image
@@ -67,4 +69,4 @@ jobs:
 
       - name: Deploy to Production
         run: ssh -i ~/.ssh/deploy_key github@swarm.june07.com \
-          /home/github/june07/aname/backend/update-service.sh docker.pkg.github.com/${GITHUB_REPOSITORY}/api-${{ github.sha }} aname-api
+          /home/github/june07/aname/backend/update-service.sh ghcr.io/${GITHUB_REPOSITORY}/api-${{ github.sha }} aname-api
