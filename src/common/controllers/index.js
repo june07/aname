@@ -1,0 +1,1 @@
+module.exports.anameController = require('./aname.controller.js')
