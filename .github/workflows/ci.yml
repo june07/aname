@@ -28,20 +28,46 @@ jobs:
       - name: Install dependencies
         run: npx npm@latest ci
 
-  build:
+  build-node:
     needs: setup
     runs-on: ubuntu-latest
     container:
-      image: gcr.io/kaniko-project/executor:debug
+      image: node:20  # ✅ Node.js environment
+      options: --entrypoint=sh
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Application
+        run: npm run build
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: built-app
+          path: dist/
+  build-image:
+    needs: build-node
+    runs-on: ubuntu-latest
+    container:
+      image: gcr.io/kaniko-project/executor:debug  # ✅ Kaniko for Docker builds
       options: --entrypoint=sh
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: built-app
+          path: dist/
+
       - name: Authenticate Docker Registry
-        run: |
-          echo "{\"auths\":{\"${{ secrets.CI_REGISTRY }}\":{\"username\":\"${{ secrets.CI_REGISTRY_USER }}\",\"password\":\"${{ secrets.CI_REGISTRY_PASSWORD }}\"}}}" > /kaniko/.docker/config.json
+        run: echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
         env:
           CI_REGISTRY: ${{ secrets.CI_REGISTRY }}
           CI_REGISTRY_USER: ${{ secrets.CI_REGISTRY_USER }}
@@ -49,19 +75,14 @@ jobs:
 
       - name: Build and Push Docker Image
         run: |
-          IMAGE_TAG="api-${{ github.sha }}"
-          LATEST_TAG="api-latest"
-
-          if [[ -n "${{ github.ref_name }}" ]]; then
-            LATEST_TAG="api-${{ github.ref_name }}"
+          if [ -z "${{ github.ref_name }}" ]; then
+            /kaniko/executor --context $GITHUB_WORKSPACE --dockerfile $GITHUB_WORKSPACE/Dockerfile --destination ${{ secrets.CI_REGISTRY_IMAGE }}:api-${{ github.sha }} --destination ${{ secrets.CI_REGISTRY_IMAGE }}:api-latest
+          else
+            /kaniko/executor --context $GITHUB_WORKSPACE --dockerfile $GITHUB_WORKSPACE/Dockerfile --destination ${{ secrets.CI_REGISTRY_IMAGE }}:api-${{ github.sha }} --destination ${{ secrets.CI_REGISTRY_IMAGE }}:api-${{ github.ref_name }}
           fi
 
-          /kaniko/executor --context $GITHUB_WORKSPACE --dockerfile $GITHUB_WORKSPACE/Dockerfile \
-            --destination ${{ secrets.CI_REGISTRY_IMAGE }}:$IMAGE_TAG \
-            --destination ${{ secrets.CI_REGISTRY_IMAGE }}:$LATEST_TAG
-
   deploy:
-    needs: build
+    needs: build-image
     runs-on: ubuntu-latest
     if: always()
 
