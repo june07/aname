@@ -59,6 +59,7 @@ When building software, you often need to generate a username for new users. Usi
 ## Getting Started
 
 ### ⚙️ Installation
+![docker-run](https://github.com/user-attachments/assets/210fd8f0-dff5-4754-84c8-75054e8c3a72)
 
 1.  **Clone the repository:**
 
