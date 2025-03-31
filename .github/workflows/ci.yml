@@ -40,25 +40,13 @@ jobs:
           JSON
       - name: Build and Push Docker Image
         run: |
-          if [ -z "${{ github.ref_name }}" ]; then
-            docker run \
-            -v $(pwd):/workspace \
-            -v $(pwd)/config.json:/kaniko/.docker/config.json:ro \
-            gcr.io/kaniko-project/executor:latest \
-            --context dir:///workspace/ \
-            --dockerfile Dockerfile \
-            --destination ${{ secrets.CI_REGISTRY_IMAGE }}:api-${{ github.sha }} \
-            --destination ${{ secrets.CI_REGISTRY_IMAGE }}:api-latest
-          else
-            docker run \
-            -v $(pwd):/workspace \
-            -v $(pwd)/config.json:/kaniko/.docker/config.json:ro \
-            gcr.io/kaniko-project/executor:latest \
-            --context dir:///workspace/ \
-            --dockerfile Dockerfile \
-            --destination ${{ secrets.CI_REGISTRY_IMAGE }}:api-${{ github.sha }} \
-            --destination ${{ secrets.CI_REGISTRY_IMAGE }}:api-${{ github.ref_name }}
-          fi
+          docker run \
+          -v $(pwd):/workspace \
+          -v $(pwd)/config.json:/kaniko/.docker/config.json:ro \
+          gcr.io/kaniko-project/executor:latest \
+          --context dir:///workspace/ \
+          --dockerfile Dockerfile \
+          --destination docker.pkg.github.com/${GITHUB_REPOSITORY}/${IMAGE_NAME}-${{ github.sha }}
 
   deploy:
     needs: build-image
@@ -79,4 +67,4 @@ jobs:
 
       - name: Deploy to Production
         run: ssh -i ~/.ssh/deploy_key github@swarm.june07.com \
-          /home/github/june07/aname/backend/update-service.sh ${{ secrets.CI_REGISTRY_IMAGE }}:api-${{ github.sha }} aname-backend_node
+          /home/github/june07/aname/backend/update-service.sh docker.pkg.github.com/${GITHUB_REPOSITORY}/${IMAGE_NAME}-${{ github.sha }} aname-backend_node
