@@ -15,10 +15,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install latest npm
-        run: npm install -g npm@latest
+        run: npm install npm@latest
 
       - name: Cache dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: node_modules
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
@@ -26,7 +26,7 @@ jobs:
             ${{ runner.os }}-node-
 
       - name: Install dependencies
-        run: npm ci
+        run: npx npm@latest ci
 
   build:
     needs: setup
@@ -40,7 +40,8 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Authenticate Docker Registry
-        run: echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+        run: |
+          echo "{\"auths\":{\"${{ secrets.CI_REGISTRY }}\":{\"username\":\"${{ secrets.CI_REGISTRY_USER }}\",\"password\":\"${{ secrets.CI_REGISTRY_PASSWORD }}\"}}}" > /kaniko/.docker/config.json
         env:
           CI_REGISTRY: ${{ secrets.CI_REGISTRY }}
           CI_REGISTRY_USER: ${{ secrets.CI_REGISTRY_USER }}
@@ -48,11 +49,16 @@ jobs:
 
       - name: Build and Push Docker Image
         run: |
-          if [ -z "${{ github.ref_name }}" ]; then
-            /kaniko/executor --context $GITHUB_WORKSPACE --dockerfile $GITHUB_WORKSPACE/Dockerfile --destination ${{ secrets.CI_REGISTRY_IMAGE }}:api-${{ github.sha }} --destination ${{ secrets.CI_REGISTRY_IMAGE }}:api-latest
-          else
-            /kaniko/executor --context $GITHUB_WORKSPACE --dockerfile $GITHUB_WORKSPACE/Dockerfile --destination ${{ secrets.CI_REGISTRY_IMAGE }}:api-${{ github.sha }} --destination ${{ secrets.CI_REGISTRY_IMAGE }}:api-${{ github.ref_name }}
+          IMAGE_TAG="api-${{ github.sha }}"
+          LATEST_TAG="api-latest"
+
+          if [[ -n "${{ github.ref_name }}" ]]; then
+            LATEST_TAG="api-${{ github.ref_name }}"
           fi
+
+          /kaniko/executor --context $GITHUB_WORKSPACE --dockerfile $GITHUB_WORKSPACE/Dockerfile \
+            --destination ${{ secrets.CI_REGISTRY_IMAGE }}:$IMAGE_TAG \
+            --destination ${{ secrets.CI_REGISTRY_IMAGE }}:$LATEST_TAG
 
   deploy:
     needs: build
@@ -69,8 +75,9 @@ jobs:
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
           chmod 400 ~/.ssh/deploy_key
           ssh-keyscan -H swarm.june07.com >> ~/.ssh/known_hosts
-          eval `ssh-agent -s`
+          eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/deploy_key
 
       - name: Deploy to Production
-        run: ssh -i ~/.ssh/deploy_key github@swarm.june07.com /home/github/june07/aname/backend/update-service.sh ${{ secrets.CI_REGISTRY_IMAGE }}:api-${{ github.sha }} aname-backend_node
+        run: ssh -i ~/.ssh/deploy_key github@swarm.june07.com \
+          /home/github/june07/aname/backend/update-service.sh ${{ secrets.CI_REGISTRY_IMAGE }}:api-${{ github.sha }} aname-backend_node
