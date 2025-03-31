@@ -35,14 +35,33 @@ jobs:
           CI_REGISTRY_USER: ${{ secrets.CI_REGISTRY_USER }}
           CI_REGISTRY_PASSWORD: ${{ secrets.CI_REGISTRY_PASSWORD }}
 
+      - name: Generate a config.json
+        run: |
+          cat <<JSON > config.json
+          {
+            "auths": {
+              "docker.pkg.github.com": {
+                "auth": "$(echo -n :${{ secrets.GITHUB_TOKEN }} | base64)"
+              }
+            }
+          }
+          JSON
       - name: Build and Push Docker Image
         run: |
           if [ -z "${{ github.ref_name }}" ]; then
-            /kaniko/executor --context $GITHUB_WORKSPACE --dockerfile $GITHUB_WORKSPACE/Dockerfile \
+            docker run \
+            -v $(pwd):/workspace \
+            -v $(pwd)/config.json:/kaniko/.docker/config.json:ro \
+            gcr.io/kaniko-project/executor:latest \
+            --context $GITHUB_WORKSPACE --dockerfile $GITHUB_WORKSPACE/Dockerfile \
             --destination ${{ secrets.CI_REGISTRY_IMAGE }}:api-${{ github.sha }} \
             --destination ${{ secrets.CI_REGISTRY_IMAGE }}:api-latest
           else
-            /kaniko/executor --context $GITHUB_WORKSPACE --dockerfile $GITHUB_WORKSPACE/Dockerfile \
+            docker run \
+            -v $(pwd):/workspace \
+            -v $(pwd)/config.json:/kaniko/.docker/config.json:ro \
+            gcr.io/kaniko-project/executor:latest \
+            --context $GITHUB_WORKSPACE --dockerfile $GITHUB_WORKSPACE/Dockerfile \
             --destination ${{ secrets.CI_REGISTRY_IMAGE }}:api-${{ github.sha }} \
             --destination ${{ secrets.CI_REGISTRY_IMAGE }}:api-${{ github.ref_name }}
           fi
