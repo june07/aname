@@ -45,7 +45,8 @@ jobs:
             -v $(pwd):/workspace \
             -v $(pwd)/config.json:/kaniko/.docker/config.json:ro \
             gcr.io/kaniko-project/executor:latest \
-            --context $GITHUB_WORKSPACE --dockerfile $GITHUB_WORKSPACE/Dockerfile \
+            --context $GITHUB_WORKSPACE \
+            --dockerfile $GITHUB_WORKSPACE/Dockerfile \
             --destination ${{ secrets.CI_REGISTRY_IMAGE }}:api-${{ github.sha }} \
             --destination ${{ secrets.CI_REGISTRY_IMAGE }}:api-latest
           else
@@ -53,7 +54,8 @@ jobs:
             -v $(pwd):/workspace \
             -v $(pwd)/config.json:/kaniko/.docker/config.json:ro \
             gcr.io/kaniko-project/executor:latest \
-            --context $GITHUB_WORKSPACE --dockerfile $GITHUB_WORKSPACE/Dockerfile \
+            --context $GITHUB_WORKSPACE \
+            --dockerfile $GITHUB_WORKSPACE/Dockerfile \
             --destination ${{ secrets.CI_REGISTRY_IMAGE }}:api-${{ github.sha }} \
             --destination ${{ secrets.CI_REGISTRY_IMAGE }}:api-${{ github.ref_name }}
           fi
